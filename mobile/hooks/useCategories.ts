@@ -16,14 +16,17 @@ export function useCategories(type?: string) {
   return useQuery({
     queryKey: ['/api/categories', type],
     queryFn: async () => {
-      const endpoint = type ? `/api/categories?type=${type}` : '/api/categories';
+      let endpoint = '/api/categories';
+      if (type) {
+        endpoint += `?type=${type}`;
+      }
       const data = await apiRequest<Category[]>('GET', endpoint);
       return data;
     },
   });
 }
 
-// Get a single category by ID
+// Get a single category
 export function useCategory(id: number) {
   return useQuery({
     queryKey: ['/api/categories', id],

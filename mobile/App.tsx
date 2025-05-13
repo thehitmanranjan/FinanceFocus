@@ -1,41 +1,36 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Provider as PaperProvider } from 'react-native-paper';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 // Screens
 import HomeScreen from './app/HomeScreen';
 import BudgetScreen from './app/BudgetScreen';
 import SettingsScreen from './app/SettingsScreen';
 
-// Context providers
+// Context
 import { DateProvider } from './contexts/DateContext';
 
-// Create a query client
-const queryClient = new QueryClient();
+// API Client
+import { queryClient } from './lib/apiClient';
 
-// Create a stack navigator
-const Stack = createStackNavigator();
-
-// Create a custom theme
-const theme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: '#4CAF50', // Green for income
-    secondary: '#2196F3', // Blue for expenses
-    accent: '#2196F3',
-    background: '#F5F5F5',
-  },
+// Types
+export type RootStackParamList = {
+  Home: undefined;
+  Budget: undefined;
+  Settings: undefined;
 };
+
+// Create the stack navigator
+const Stack = createStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <PaperProvider theme={theme}>
-        <StatusBar style="auto" />
+      <PaperProvider>
         <DateProvider>
           <NavigationContainer>
             <Stack.Navigator
@@ -48,9 +43,17 @@ export default function App() {
               <Stack.Screen name="Budget" component={BudgetScreen} />
               <Stack.Screen name="Settings" component={SettingsScreen} />
             </Stack.Navigator>
+            <StatusBar style="auto" />
           </NavigationContainer>
         </DateProvider>
       </PaperProvider>
     </QueryClientProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+});

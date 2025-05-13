@@ -1,10 +1,9 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, addDays, addWeeks, addMonths, addYears, subDays, subWeeks, subMonths, subYears } from 'date-fns';
+import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, addYears, subYears } from 'date-fns';
+import { getDateRange, formatDatePeriod } from '../lib/date-utils';
 
-// Define the time range type
 export type TimeRange = 'day' | 'week' | 'month' | 'year';
 
-// Define the context type
 interface DateContextType {
   currentDate: Date;
   timeRange: TimeRange;
@@ -17,104 +16,63 @@ interface DateContextType {
   resetToToday: () => void;
 }
 
-// Create the context
-const DateContext = createContext<DateContextType | undefined>(undefined);
+// Create context with default values
+const DateContext = createContext<DateContextType>({
+  currentDate: new Date(),
+  timeRange: 'month',
+  startDate: new Date(),
+  endDate: new Date(),
+  formattedPeriod: '',
+  setTimeRange: () => {},
+  goToPreviousPeriod: () => {},
+  goToNextPeriod: () => {},
+  resetToToday: () => {},
+});
 
-// Provider component
 export function DateProvider({ children }: { children: ReactNode }) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
 
-  // Calculate date range based on current date and range
-  const calculateDates = (date: Date, range: TimeRange) => {
-    let startDate: Date;
-    let endDate: Date;
-
-    switch (range) {
-      case 'day':
-        startDate = startOfDay(date);
-        endDate = endOfDay(date);
-        break;
-      case 'week':
-        startDate = startOfWeek(date, { weekStartsOn: 1 }); // Monday
-        endDate = endOfWeek(date, { weekStartsOn: 1 });
-        break;
-      case 'month':
-        startDate = startOfMonth(date);
-        endDate = endOfMonth(date);
-        break;
-      case 'year':
-        startDate = startOfYear(date);
-        endDate = endOfYear(date);
-        break;
-      default:
-        startDate = startOfMonth(date);
-        endDate = endOfMonth(date);
-    }
-
-    return { startDate, endDate };
-  };
-
+  // Calculate start and end dates based on current date and time range
+  const { startDate, endDate } = getDateRange(currentDate, timeRange);
+  
   // Format the period for display
-  const formatPeriod = (date: Date, range: TimeRange): string => {
-    switch (range) {
-      case 'day':
-        return format(date, 'MMMM d, yyyy');
-      case 'week':
-        const weekStart = startOfWeek(date, { weekStartsOn: 1 });
-        const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
-        return `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}`;
-      case 'month':
-        return format(date, 'MMMM yyyy');
-      case 'year':
-        return format(date, 'yyyy');
-      default:
-        return format(date, 'MMMM yyyy');
-    }
-  };
+  const formattedPeriod = formatDatePeriod(currentDate, timeRange);
 
-  // Go to previous period
+  // Navigate to previous period
   const goToPreviousPeriod = () => {
-    let newDate;
     switch (timeRange) {
       case 'day':
-        newDate = subDays(currentDate, 1);
+        setCurrentDate(subDays(currentDate, 1));
         break;
       case 'week':
-        newDate = subWeeks(currentDate, 1);
+        setCurrentDate(subWeeks(currentDate, 1));
         break;
       case 'month':
-        newDate = subMonths(currentDate, 1);
+        setCurrentDate(subMonths(currentDate, 1));
         break;
       case 'year':
-        newDate = subYears(currentDate, 1);
+        setCurrentDate(subYears(currentDate, 1));
         break;
-      default:
-        newDate = subMonths(currentDate, 1);
     }
-    setCurrentDate(newDate);
   };
 
-  // Go to next period
+  // Navigate to next period
   const goToNextPeriod = () => {
-    let newDate;
     switch (timeRange) {
       case 'day':
-        newDate = addDays(currentDate, 1);
+        setCurrentDate(addDays(currentDate, 1));
         break;
       case 'week':
-        newDate = addWeeks(currentDate, 1);
+        setCurrentDate(addWeeks(currentDate, 1));
         break;
       case 'month':
-        newDate = addMonths(currentDate, 1);
+        setCurrentDate(addMonths(currentDate, 1));
         break;
       case 'year':
-        newDate = addYears(currentDate, 1);
+        setCurrentDate(addYears(currentDate, 1));
         break;
-      default:
-        newDate = addMonths(currentDate, 1);
     }
-    setCurrentDate(newDate);
   };
 
   // Reset to today
@@ -122,27 +80,31 @@ export function DateProvider({ children }: { children: ReactNode }) {
     setCurrentDate(new Date());
   };
 
-  // Calculate date range
-  const { startDate, endDate } = calculateDates(currentDate, timeRange);
-  const formattedPeriod = formatPeriod(currentDate, timeRange);
-
-  // Context value
-  const value = {
-    currentDate,
-    timeRange,
-    startDate,
-    endDate,
-    formattedPeriod,
-    setTimeRange,
-    goToPreviousPeriod,
-    goToNextPeriod,
-    resetToToday,
+  // Handle time range change
+  const handleTimeRangeChange = (range: TimeRange) => {
+    setTimeRange(range);
   };
 
-  return <DateContext.Provider value={value}>{children}</DateContext.Provider>;
+  return (
+    <DateContext.Provider
+      value={{
+        currentDate,
+        timeRange,
+        startDate,
+        endDate,
+        formattedPeriod,
+        setTimeRange: handleTimeRangeChange,
+        goToPreviousPeriod,
+        goToNextPeriod,
+        resetToToday,
+      }}
+    >
+      {children}
+    </DateContext.Provider>
+  );
 }
 
-// Custom hook to use the context
+// Custom hook to use the DateContext
 export function useDate() {
   const context = useContext(DateContext);
   if (context === undefined) {
