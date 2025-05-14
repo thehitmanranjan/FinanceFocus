@@ -1,7 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 
 // Base API URL - would be configurable in a real app
-const API_BASE_URL = 'http://localhost:3000'; // For dev environment
+const API_BASE_URL = 'https://frugify-backend.onrender.com'; // For dev environment
 
 /**
  * Helper to throw errors for non-2xx responses
